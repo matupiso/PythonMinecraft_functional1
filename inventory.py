@@ -656,13 +656,13 @@ class CraftingTable(Inventory):
         elif craft_group == [STONE, STONE, STONE, 0, STICK, 0, 0, STICK, 0]:
             return (STONE_PICAXE, 1), Picaxe(tier=STONE_PICAXE, durability=Picaxe().get_durability(STONE_PICAXE))
         elif craft_group.count(WOOD) == 8 and craft_group[1] == 0:
-            return (WOODEN_CHESPLATE, 1), Chesplate(WOODEN_CHESPLATE, 1)
+            return (WOODEN_CHESPLATE, 1), Chesplate(WOODEN_CHESPLATE)
         elif craft_group.count(WOOD) == 7 and craft_group[4] == 0 and craft_group[7] == 0:
-            return (WOODEN_LEGGINGS, 1), Leggings(WOODEN_LEGGINGS, 1)
+            return (WOODEN_LEGGINGS, 1), Leggings(WOODEN_LEGGINGS)
         elif craft_group[0:3] == [WOOD, WOOD, WOOD] and craft_group[3:6] == [WOOD,0, WOOD] and craft_group[6:9] == [0, 0, 0]:
             return (WOODEN_HELMET, 1), Helmet(WOODEN_HELMET)
         elif craft_group == [0, 0, 0, WOOD, 0, WOOD, WOOD, 0, WOOD]:
-            return (WOODEN_BOOTS, 1), Boots(WOODEN_BOOTS, 1)
+            return (WOODEN_BOOTS, 1), Boots(WOODEN_BOOTS)
         elif craft_group == [PLANKS, PLANKS, 0, PLANKS, STICK, 0, 0, STICK, 0]:
             return (WOODEN_AXE, 1), Axe(tier=WOODEN_AXE, durability=Axe().get_durability(WOODEN_AXE))
         elif craft_group == [STONE, STONE, 0, STONE, STICK, 0, 0, STICK, 0]:
