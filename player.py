@@ -4,12 +4,12 @@ import pygame as pg
 from utils import *
 from world_objects.entity import player_entity
 from world_objects.item import InventoryItem as Item
-from world_objects.item import get_itemobj 
+from world_objects.item import get_itemobj
 from time import time
 from textures import replace_color, water_on_screen
 from terrian_gen import get_height
 from inventory import *
-
+from chat import Chat
 
 
 
@@ -91,6 +91,8 @@ class Player(Camera):
 
         #inventory
         self.inventory = Inventory(app)
+        self.crafting_table = CraftingTable(app)
+        self.chat = Chat(app)
 
 
         self.held_item = None
@@ -135,7 +137,9 @@ class Player(Camera):
 
 
     def update(self):
+
         if self.on:
+
             
             super().update()
         self.mouse_controll()
@@ -147,7 +151,8 @@ class Player(Camera):
         if self.hand_angle_rel > 0:
             self.hand_angle_rel -= 1
 
-        
+        self.chat.update()
+        self.crafting_table.update()
 
 
 
@@ -179,9 +184,7 @@ class Player(Camera):
             if self.seconds_counter % 5 == 0:
                 if self.bubbeles == 0:
                     self.damage(4, damage_content=['drown', ])
-
-        
-                
+               
             if self.seconds_counter % 25 > 0 and self.in_water:
                 if self.bubbeles > 0: self.bubbeles -= 1
 
@@ -279,6 +282,8 @@ class Player(Camera):
 
 
         self.inventory.render()
+        self.crafting_table.render()
+        self.chat.render()
 
 
 
@@ -294,6 +299,10 @@ class Player(Camera):
         if self.dead:
             return
         self.inventory.enabled = True
+        self.crafting_table.enabled = False
+        self.chat.enabled = False
+        
+
         self.on = False
         pg.event.set_grab(False)
         pg.mouse.set_visible(True)
@@ -305,8 +314,47 @@ class Player(Camera):
         self.on = True
         pg.event.set_grab(True)
         pg.mouse.set_visible(False)
-    
+    def chat_on(self):
+        if self.dead:
+            return
+        self.inventory.enabled = False
+        self.crafting_table.enabled = False
+        self.chat.enabled = True
         
+
+        self.on = False
+        pg.event.set_grab(False)
+        pg.mouse.set_visible(True)
+
+    def chat_off(self):
+        if self.dead:
+            return
+        self.chat.enabled = False
+        self.on = True
+        pg.event.set_grab(True)
+        pg.mouse.set_visible(False)
+    
+    def crafting_table_on(self):
+        if self.dead:
+            return
+        self.inventory.enabled = False
+        self.crafting_table.enabled = True
+        self.chat.enabled = False
+        
+
+        self.on = False
+        pg.event.set_grab(False)
+        pg.mouse.set_visible(True)
+
+    def crafting_table_off(self):
+        if self.dead:
+            return
+        self.crafting_table.at_close(self)
+        self.crafting_table.enabled = False
+        self.on = True
+        pg.event.set_grab(True)
+        pg.mouse.set_visible(False)
+    
     def update_inventory(self):
         self.held_item = self.inventory.get_hand_group()[self.hand_index]
         
@@ -368,6 +416,8 @@ class Player(Camera):
             return 
         
         if voxel_handler.entity and self.last_rbutton_state == False and r == True:
+            if hasattr(self.held_item, "damage"):
+                self.held_item.damage()
             damage = get_damage(self.held_item.item_id if self.held_item else 0)
             damage_multiplyer = 1
 
@@ -400,7 +450,7 @@ class Player(Camera):
                     self.app.sound.playsound(f"minecraft.blocks.{block_name}.dig")
                     
                 
-                if voxel_handler.world.crack_pos == None  and voxel_handler.voxel_id:
+                if voxel_handler.world.crack_pos == None  and voxel_handler.voxel_id and is_breakable(voxel_handler.voxel_id, (0 if self.held_item == 0 else self.held_item.item_id)):
 
                     voxel_handler.world.crack_pos = glm.ivec3(voxel_handler.voxel_world_pos)
                     voxel_handler.world.acrack_index = 5
@@ -434,18 +484,18 @@ class Player(Camera):
                               
 
                                 #update inventory
-                                for index, value in enumerate(self.inventory.get_normal_use_group(), 1):
+                                for index, value in enumerate(self.inventory.get_normal_use_group()):
 
                            
                                     if isinstance(value, Item) and value.count < 64 and value.item_id == to_surival_mined(voxel_id, self.held_item.item_id if self.held_item else 0):
                                         value.count += 1
                                         break
                                     elif value == 0:
-                                        self.inventory[f'a{index}'] = get_itemobj(to_surival_mined(voxel_id, self.held_item.item_id if self.held_item else 0), 1)
+                                        self.inventory.slots[index] = get_itemobj(to_surival_mined(voxel_id, self.held_item.item_id if self.held_item else 0), 1)
                                         break
-                            if isinstance(self.held_item, StoneHammer):
+                            if hasattr(self.held_item, "damage"):
                                 self.held_item.damage()
-                                self.inventory.update()
+                              
                                     
                     else:
                         self.app.sound.playsound(f"minecraft.blocks.{block_name}.dig")
@@ -454,33 +504,36 @@ class Player(Camera):
             voxel_handler.update()
             self.hand_angle_rel = 5 if GAMEMODE == CREATIVE else get_dig_time(self.held_item.item_id if self.held_item else 0, voxel_handler.voxel_id) if GAMEMODE == SURIVAL  else 0 
 
-        elif voxel_handler.voxel_id and l and self.hand_angle_rel == 0 and voxel_handler.voxel_normal and self.held_item != 0:
-            if has_gui(voxel_id):
-                if get_gui(voxel_id) == "CMD_BLOCK":
-                          self.cmd_block_on()
+        elif voxel_handler.voxel_id and l and self.hand_angle_rel == 0 and voxel_handler.voxel_normal:
+            
+            if voxel_handler.voxel_id == CRAFTING_TABLE:
+                print("l")
+                self.crafting_table_on()
+                self.crafting_table.at_open(self)
+            elif self.held_item != 0:
 
-            elif is_useable(self.held_item.item_id):
-                self.held_item.use(self)
-            elif is_placeble(self.held_item.item_id):
-                if self.held_item.item_id == LEAVES:
-                    if self.bubbeles + 5 <= 10:
-                        self.bubbeles += 6
-                if self.held_item.item_id in BLOCKS:
-                    block_name = BLOCK_NAMES[BLOCKS.index(self.held_item.item_id)].lower()
-                else:
-                    block_name = ITEM_NAMES[ITEMS.index(self.held_item.item_id)].lower()
- 
- 
-                if GAMEMODE == CREATIVE:
-                    self.app.sound.playsound(f"minecraft.blocks.{block_name}.place")
-                    voxel_handler.setblock(*(voxel_handler.voxel_world_pos + voxel_handler.voxel_normal), self.held_item.item_id)
-                elif GAMEMODE == SURIVAL:
-                    self.app.sound.playsound(f"minecraft.blocks.{block_name}.place")
-                    voxel_handler.setblock(*(voxel_handler.voxel_world_pos + voxel_handler.voxel_normal), self.held_item.item_id)
-                    self.held_item.count -= 1
-                    self.update_inventory()
+                if is_useable(self.held_item.item_id):
+                    self.held_item.use( self)
+                elif is_placeble(self.held_item.item_id):
+                    if self.held_item.item_id == LEAVES:
+                        if self.bubbeles + 5 <= 10:
+                            self.bubbeles += 6
+                    if self.held_item.item_id in BLOCKS:
+                        block_name = BLOCK_NAMES[BLOCKS.index(self.held_item.item_id)].lower()
+                    else:
+                        block_name = ITEM_NAMES[ITEMS.index(self.held_item.item_id)].lower()
+    
+    
+                    if GAMEMODE == CREATIVE:
+                        self.app.sound.playsound(f"minecraft.blocks.{block_name}.place")
+                        voxel_handler.setblock(*(voxel_handler.voxel_world_pos + voxel_handler.voxel_normal), self.held_item.item_id)
+                    elif GAMEMODE == SURIVAL:
+                        self.app.sound.playsound(f"minecraft.blocks.{block_name}.place")
+                        voxel_handler.setblock(*(voxel_handler.voxel_world_pos + voxel_handler.voxel_normal), self.held_item.item_id)
+                        self.held_item.count -= 1
+                      
 
-                self.hand_angle_rel = 10
+                    self.hand_angle_rel = 10
 
                     
 
@@ -518,6 +571,27 @@ class Player(Camera):
         print(damage_content)
         if GAMEMODE ==  CREATIVE:
             return
+        
+
+
+        if damage_content[0] == "attack" or damage_content[0] == "fall_damage":
+            if isinstance(self.inventory['f1'], Helmet):
+                hp *= self.inventory['f1'].get_protection()
+                hp = int(hp)
+            if isinstance(self.inventory['f2'], Chesplate):
+                hp *= self.inventory['f2'].get_protection()
+                hp = int(hp)
+            if isinstance(self.inventory['f3'], Leggings):
+                hp *= self.inventory['f3'].get_protection()
+                hp = int(hp)
+            if isinstance(self.inventory['f4'], Boots):
+                hp *= self.inventory['f4'].get_protection()
+                hp = int(hp)
+        elif damage_content[0] == "drown":
+              if isinstance(self.inventory['f1'], BreathingMask):
+                  self.inventory['f1'].fuse()
+                  return
+            
         if self.health - hp > 0:
             self.health -= hp
             if hp > 0:
@@ -548,7 +622,7 @@ class Player(Camera):
                 death_text = f"{self.name} fell out off the world"
             elif damage_content[0] == "wither":
                 death_text = f"{self.name} withered away"
-            self.app.chat.add_messadge("game", death_text.capitalize() + ".")
+            self.chat.add_messadge("game", death_text.capitalize() + ".")
             self.at_death()
 
         
@@ -558,9 +632,9 @@ class Player(Camera):
 
             if self.app.collisions.player_collided_bottom(self.position) and self.velocity < 0:
                 #fall damage
-                if -self.velocity > 1.5:
+                if -self.velocity > 0.9:
 
-                    damage = int(-self.velocity * 3.5)
+                    damage = int(-self.velocity * 2)
                     print(self.velocity)
                     if not self.can_ud(): self.damage(damage, damage_content=["fall_damage",])
                     
@@ -588,6 +662,8 @@ class Player(Camera):
 
     def keyboard_controll(self):
         key_state = pg.key.get_pressed()
+        if key_state[pg.K_t] and self.inventory.enabled == False and self.crafting_table.enabled == False:
+            self.chat_on()
         if key_state[pg.K_r]:
             speed = PLAYER_SPRINT_SPEED
         else:
@@ -647,11 +723,14 @@ class Player(Camera):
 
 
           
-        if key_state[pg.K_e] and self._inventory_toggled == False and self.on == True:
+        if key_state[pg.K_e] and self._inventory_toggled == False:
             if self.inventory.enabled:
                 self.inventory_off() 
-            else:
+            elif self.crafting_table.enabled:
+                self.crafting_table_off() 
+            elif not self.inventory.enabled:
                 self.inventory_on()
+            
 
             self._inventory_toggled = True
         elif not key_state[pg.K_e] and self._inventory_toggled == True:

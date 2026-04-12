@@ -6,7 +6,6 @@ from player import Player
 from textures import Textures   
 from collisions import Collisions
 from commands import Commands   
-from chat import Chat
 from terrian_gen import get_height
 from sound import Sound
 from entity_handler import EntityHandler    
@@ -87,8 +86,7 @@ class VoxelEngine:
         self.shader_program = ShaderProgram(self)
         self.scene = Scene(self)    
         self.voxel_handler = VoxelHandler(self.scene.world)
-        self.commands = Commands(self)
-        self.chat = Chat(self)              
+        self.commands = Commands(self)       
         self.sound = Sound(self)
         self.entity_handler = EntityHandler(self)
         self.event_handler = EventHandler(self)
@@ -115,14 +113,13 @@ class VoxelEngine:
         self.time = pg.time.get_ticks() * 0.001
 
         #update other things
-        self.chat.update()
+
         self.entity_handler.update()
         self.player.update()    
         self.shader_program.update()
         self.voxel_handler.update()
         self.scene.update()    
-   
-        self.chat.update() 
+
         self.event_handler.update( )
 
     
@@ -150,7 +147,6 @@ class VoxelEngine:
         self.ctx.clear(color=self.sky_color)
 
         #render
-        self.chat.render() 
         self.scene.render()
         
     
@@ -167,15 +163,12 @@ class VoxelEngine:
             if event.type == pg.KEYDOWN and event.key == pg.K_p:
                 print(self.player.position)
 
-            self.chat.handle_input(event)
+
+            self.player.chat.handle_input(event)
+
+           
 
                 
-
-            if event.type == pg.KEYDOWN and event.key == pg.K_t and self.chat.on == False:
-                self.chat.on = True
-
-      
-            
 
       
     def run(self):

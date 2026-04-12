@@ -187,19 +187,9 @@ def coal_ore_vein(x, y, z):
 
 @njit
 def diamond_ore_vein(x, y, z):
-    la = (DIAMOND_ORE_LEVEL_A - (WORLD_Y - get_height(x, z)))
-    lb = (DIAMOND_ORE_LEVEL_B - (WORLD_Y - get_height(x, z)))
-    
-
-    if y > la + 6:
+    if y > 35:
         return False
-    f = 0.2
-    if y > la:
-        f *= 1 / (y - la)
-    elif y < lb:
-        f *= 1 / (lb - y)
-    p = noise3(x * f, y * f, z * f)
-    return p < -0.7
+    return abs_float(noise3(x * 0.001, y * 0.001, z * 0.001)) < 0.06
    
 
 
@@ -294,16 +284,15 @@ def set_voxel_id(voxels, x, y, z, wx, wy, wz):
             voxels[get_index(x, y, z)] = 0
             return
 
-        # if  wy < world_height - 2 and y > 1 and wy < MOUNTIN_LVL and noise_int(x, z, 0.34, 0, 90) == 3:
-        #     voxels[get_index(x, y-1, z)] = WOOD 
-        #     voxel_id = TORCH
+
 
     else:
         if coal_ore_vein(wx, wy, wz) and not voxel_id in [GRASS, DIRT, BEDROCK]:
-            voxel_id = COAL_ORE
-    
+            voxels[get_index(x, y, z)] = COAL_ORE
+            
         elif diamond_ore_vein(wx, wy, wz) and not voxel_id in [GRASS, DIRT, BEDROCK]:
-            voxel_id = DIAMOND_ORE
+            voxels[get_index(x, y, z)] = DIAMOND_ORE
+           
 
         else:
             if not voxel_id in [GRASS, DIRT, BEDROCK]:

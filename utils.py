@@ -21,7 +21,25 @@ def get_dig_time(x, b):
         rel = 1 if b not in [GRASS, DIRT, LEAVES] else 3
         return (HARDNESS_LEVELS[b] - rel if HARDNESS_LEVELS[b] - rel > 0 else 0) if b else 1
     elif x == STONE_HAMMER:
-        rel = 2 if b in [GRASS, DIRT, LEAVES] else 5 if b in [WOOD, TORCH] else 14 if b in [STONE, COAL_ORE] else 0
+        rel = 1 if b in [GRASS, DIRT, LEAVES, SAND] else 12 if b in [WOOD, TORCH, PLANKS, CRAFTING_TABLE] else 5 if b in [STONE, COAL_ORE, DIAMOND_ORE] else 0
+        return (HARDNESS_LEVELS[b] - rel if HARDNESS_LEVELS[b] - rel > 0 else 0) if b else 1
+    elif x == WOODEN_PICAXE:
+        rel = 1 if b in [GRASS, DIRT, LEAVES,SAND, WOOD, TORCH, PLANKS, CRAFTING_TABLE] else 9 if b in [STONE, COAL_ORE, DIAMOND_ORE] else 0
+        return (HARDNESS_LEVELS[b] - rel if HARDNESS_LEVELS[b] - rel > 0 else 0) if b else 1
+    elif x == STONE_PICAXE:
+        rel = 1 if b in [GRASS, DIRT, LEAVES,SAND, WOOD, TORCH, PLANKS, CRAFTING_TABLE] else 14 if b in [STONE, COAL_ORE, DIAMOND_ORE] else 0
+        return (HARDNESS_LEVELS[b] - rel if HARDNESS_LEVELS[b] - rel > 0 else 0) if b else 1
+    elif x == WOODEN_SHOVEL:
+        rel = 1 if b in [WOOD, TORCH, PLANKS, CRAFTING_TABLE] else 1 if b in [STONE, COAL_ORE, DIAMOND_ORE] else 7 if b in [SAND, LEAVES, DIRT, GRASS] else 0
+        return (HARDNESS_LEVELS[b] - rel if HARDNESS_LEVELS[b] - rel > 0 else 0) if b else 1
+    elif x == STONE_SHOVEL:
+        rel = 1 if b in [WOOD, TORCH, PLANKS, CRAFTING_TABLE] else 1 if b in [STONE, COAL_ORE, DIAMOND_ORE] else 14 if b in [SAND, LEAVES, DIRT, GRASS] else 0
+        return (HARDNESS_LEVELS[b] - rel if HARDNESS_LEVELS[b] - rel > 0 else 0) if b else 1
+    elif x == STONE_AXE:
+        rel = 14 if b in [WOOD, TORCH, PLANKS, CRAFTING_TABLE] else 1 if b in [STONE, COAL_ORE, DIAMOND_ORE] else 1 if b in [SAND, LEAVES, DIRT, GRASS] else 0
+        return (HARDNESS_LEVELS[b] - rel if HARDNESS_LEVELS[b] - rel > 0 else 0) if b else 1
+    elif x == WOODEN_AXE:
+        rel = 9 if b in [WOOD, TORCH, PLANKS, CRAFTING_TABLE] else 1 if b in [STONE, COAL_ORE, DIAMOND_ORE] else 1 if b in [SAND, LEAVES, DIRT, GRASS] else 0
         return (HARDNESS_LEVELS[b] - rel if HARDNESS_LEVELS[b] - rel > 0 else 0) if b else 1
     
     else:
@@ -30,9 +48,13 @@ def get_dig_time(x, b):
 def is_breakable(block_type, tool=None):
     if GAMEMODE == CREATIVE:
         return True 
-    if block_type in [COMMAND_BLOCK, BEDROCK, WATER_FULL, STONE, COAL_ORE, DIAMOND_ORE]:
+    if tool == STICK and block_type in [COMMAND_BLOCK, BEDROCK, WATER_FULL, COAL_ORE, DIAMOND_ORE]:
         return False
-    return True
+    elif tool in [STONE_HAMMER, WOODEN_PICAXE, STONE_PICAXE, 
+                  WOODEN_AXE, WOODEN_SHOVEL, WOODEN_PICAXE,
+                  STONE_SHOVEL, STONE_AXE, STONE_SHOVEL] and block_type in [COMMAND_BLOCK, BEDROCK, WATER_FULL, DIAMOND_ORE]:
+        return False
+    return block_type not in [BEDROCK, COMMAND_BLOCK, WATER_FULL]
 
 
 def calc_yaw_pitch(position1:glm.vec3, position2:glm.vec3):
@@ -51,6 +73,10 @@ def r_to_r1x0(value, max_val, min_val=0) -> float:
 
     return value / max_val
 
+def is_helmet(x): return x in [WOODEN_HELMET, ]
+def is_chesplate(x): return x in [WOODEN_CHESPLATE, ]
+def is_leggings(x): return x in [WOODEN_LEGGINGS, ]
+def is_boots(x): return x in [WOODEN_BOOTS, ]
 def con_range(x:float, in_min:float, in_max:float, out_min:float,out_max:float):
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 
@@ -82,6 +108,26 @@ def to_surival_mined(block, tool):
     elif block == COAL_ORE:return COAL
     elif block in [CRACKED_GASS_STONE, WATER_FULL]: return 0
     return block
+
+
+
+
+
+def get_stackable_count(x):
+    if x in BLOCKS:
+        return 64
+    elif x == CHERRIES:
+        return 16
+    elif x == COAL:
+        return 64
+    elif x == STICK:
+        return 64
+    elif x == STONE_HAMMER:
+        return 1
+    elif is_helmet(x) or is_boots(x) or is_chesplate(x) or is_leggings(x):
+        return 1
+    else:
+        return 4
 
 def sun_value(sun_angle):
 
@@ -167,11 +213,8 @@ def is_useable(x):
 
 
 def has_gui(x):
-    return True if x in [COMMAND_BLOCK, ] else False
+    return True if x in [COMMAND_BLOCK, CRAFTING_TABLE] else False
 
-def get_gui(x):
-    if x == COMMAND_BLOCK:
-        return "CMD_BLOCK"
   
 
 
@@ -203,6 +246,14 @@ def get_damage(x:int):
     
     else:
         if x == STONE_HAMMER:
+            return 4
+        elif x == WOODEN_SWORD:
+            return 3
+        elif x == STONE_SWORD:
+            return 4
+        elif x == STONE_AXE:
+            return 5
+        elif x == WOODEN_AXE:
             return 4
         
         else:

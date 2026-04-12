@@ -13,20 +13,11 @@ class Chat:
         self.font = pg.font.Font("freesansbold.ttf", 17)
         self.render_list = []
         self.counter = 0
-        self.on = False
+        self.enabled = False
         self.pending_messadge = ""
 
 
-    
-
-    @property
-    def on(self):
-        return not self.app.player.on
-    
-    @on.setter
-    def on(self, x):
-        self.app.player.on = not x
-
+ 
     
     def update(self):
         if self.counter == 600:
@@ -40,8 +31,8 @@ class Chat:
 
     def handle_input(self, event:pg.event.Event):
         key = pg.key.get_pressed()
-        if key[pg.K_LCTRL] and self.on:
-            self.on = False
+        if key[pg.K_LCTRL] and self.enabled:
+            self.enabled = False
             if self.pending_messadge.startswith("/"):
                 self.chat_command(self.pending_messadge)
             else:
@@ -49,7 +40,7 @@ class Chat:
             self.pending_messadge = ""
             return 
 
-        if self.on:
+        if self.enabled:
             if key[pg.K_BACKSPACE]:
                 self.pending_messadge = self.pending_messadge[:-1] if len(self.pending_messadge) != 0 else ""
             elif event.type == pg.KEYDOWN and event.key < 127:
@@ -60,7 +51,7 @@ class Chat:
             text, color = item
             self.render_at_index(key + 1, text, color)
 
-        if self.on:   self.render_at_index(0, self.pending_messadge + "_")
+        if self.enabled:   self.render_at_index(0, self.pending_messadge + "_")
 
 
     def chat_command(self, chat_input):

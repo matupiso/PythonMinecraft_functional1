@@ -273,7 +273,7 @@ class Commands:
                                          executor_entity=exec_entity, syntax_id=syntax_id)
         
         
-        self.app.chat.add_messadge("game", messadge, color="white" if success else "red")
+        self.app.player.chat.add_messadge("game", messadge, color="white" if success else "red")
         
 
 
