@@ -6,7 +6,7 @@ SK:
       životy, inventory, krafting ... niektore funguju nie najlepšie),
       Entity ,
       Čet,
-    Ak chcete zmenit gamemode etc...
+    Ak chcete zmenit gamemode, velkosť sveta, etc...
     to nastavenie je v settings.py
     Niektorý kód a súbory sú ešte znefukčnený.
   
@@ -36,7 +36,7 @@ EN:
     hearts, inventory, crafting ... some don't work the best),
     Entities,
     Chat,
-    If you want to change gamemode etc...
+    If you want to change gamemode world size, etc...
     that setting is in settings.py
     Some code and files are still unusable
 
