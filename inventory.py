@@ -335,7 +335,7 @@ class Inventory:
                 screen.blit(self.items[item_id], (x + 2, y + 2))
                 if hasattr(self[idf], 'damage'):
                     rel_dur = (self[idf].durability / self[idf].durability_default) * 46
-                    pg.draw.rect(screen, "black", pg.Rect(x + 2, y + 50, 46, 4))
+                    pg.draw.rect(screen, (2, 2, 2), pg.Rect(x + 2, y + 50, 46, 4))
                     pg.draw.rect(screen, "green" if rel_dur > 35 else "yellow" if rel_dur > 20 else (250, 0, 0), pg.Rect(x + 2, y + 50, rel_dur, 4))
                     
 
